@@ -320,13 +320,15 @@
     "pathPattern": "/me/todo/lists",
     "method": "get",
     "toolName": "list-todo-task-lists",
-    "scopes": ["Tasks.Read"]
+    "scopes": ["Tasks.Read"],
+    "llmTip": "Smart lists (My Day, Important, Planned, All, Assigned to me) are client-side only - no API endpoints. Only storage lists are queryable. wellknownListName values: 'defaultList' (Tasks), 'flaggedEmails' (Flagged Email), 'none' (custom lists). List groups (folders) are UI-only, not exposed via API."
   },
   {
     "pathPattern": "/me/todo/lists/{todoTaskList-id}/tasks",
     "method": "get",
     "toolName": "list-todo-tasks",
-    "scopes": ["Tasks.Read"]
+    "scopes": ["Tasks.Read"],
+    "llmTip": "💡 TIP: By default returns ALL tasks including completed. Use filter=\"status ne 'completed'\" to match desktop's incomplete-only view. Use expand=[\"checklistItems\"] to include task steps/checklists in response. PERFORMANCE: To reduce payload, filter by title with contains(title, 'keyword') - e.g., filter=\"contains(title, 'ENG') and status ne 'completed'\". NOTE: $select is NOT supported on this endpoint (returns 400 error). startswith() also fails with special characters."
   },
   {
     "pathPattern": "/me/todo/lists/{todoTaskList-id}/tasks/{todoTask-id}",
@@ -338,18 +340,60 @@
     "pathPattern": "/me/todo/lists/{todoTaskList-id}/tasks",
     "method": "post",
     "toolName": "create-todo-task",
-    "scopes": ["Tasks.ReadWrite"]
+    "scopes": ["Tasks.ReadWrite"],
+    "llmTip": "To link local documents, use Office URI in task body (not linkedResources): ms-word:file:///C:/path/file.docx. Format: forward slashes, URL-encode spaces as %20. linkedResources only makes HTTPS URLs clickable, not file:// or ms-word: URIs."
   },
   {
     "pathPattern": "/me/todo/lists/{todoTaskList-id}/tasks/{todoTask-id}",
     "method": "patch",
     "toolName": "update-todo-task",
-    "scopes": ["Tasks.ReadWrite"]
+    "scopes": ["Tasks.ReadWrite"],
+    "llmTip": "To link local documents, use Office URI in task body (not linkedResources): ms-word:file:///C:/path/file.docx. Format: forward slashes, URL-encode spaces as %20. linkedResources only makes HTTPS URLs clickable, not file:// or ms-word: URIs."
   },
   {
     "pathPattern": "/me/todo/lists/{todoTaskList-id}/tasks/{todoTask-id}",
     "method": "delete",
     "toolName": "delete-todo-task",
+    "scopes": ["Tasks.ReadWrite"]
+  },
+  {
+    "pathPattern": "/me/todo/lists",
+    "method": "post",
+    "toolName": "create-todo-task-list",
+    "scopes": ["Tasks.ReadWrite"],
+    "llmTip": "Creates a new To-Do task list. Required body property: displayName (string). Example: {\"displayName\": \"My New List\"}"
+  },
+  {
+    "pathPattern": "/me/todo/lists/{todoTaskList-id}",
+    "method": "delete",
+    "toolName": "delete-todo-task-list",
+    "scopes": ["Tasks.ReadWrite"]
+  },
+  {
+    "pathPattern": "/me/todo/lists/{todoTaskList-id}/tasks/{todoTask-id}/checklistItems",
+    "method": "get",
+    "toolName": "list-todo-checklist-items",
+    "scopes": ["Tasks.Read"],
+    "llmTip": "Lists all checklist items (steps) for a task. Alternative: use expand=[\"checklistItems\"] on get-todo-task."
+  },
+  {
+    "pathPattern": "/me/todo/lists/{todoTaskList-id}/tasks/{todoTask-id}/checklistItems",
+    "method": "post",
+    "toolName": "create-todo-checklist-item",
+    "scopes": ["Tasks.ReadWrite"],
+    "llmTip": "Creates a checklist item (step) within a task. Required body property: displayName (string). Optional: isChecked (boolean, default false). Example: {\"displayName\": \"Step 1\", \"isChecked\": false}"
+  },
+  {
+    "pathPattern": "/me/todo/lists/{todoTaskList-id}/tasks/{todoTask-id}/checklistItems/{checklistItem-id}",
+    "method": "patch",
+    "toolName": "update-todo-checklist-item",
+    "scopes": ["Tasks.ReadWrite"],
+    "llmTip": "Updates a checklist item. Can update displayName (string) or isChecked (boolean). Example: {\"isChecked\": true}"
+  },
+  {
+    "pathPattern": "/me/todo/lists/{todoTaskList-id}/tasks/{todoTask-id}/checklistItems/{checklistItem-id}",
+    "method": "delete",
+    "toolName": "delete-todo-checklist-item",
     "scopes": ["Tasks.ReadWrite"]
   },
   {

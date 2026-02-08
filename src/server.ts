@@ -6,6 +6,7 @@ import express, { Request, Response } from 'express';
 import logger, { enableConsoleLogging } from './logger.js';
 import { registerAuthTools } from './auth-tools.js';
 import { registerGraphTools, registerDiscoveryTools } from './graph-tools.js';
+import { registerConversionTools } from './conversion-tools.js';
 import GraphClient from './graph-client.js';
 import AuthManager, { buildScopesFromEndpoints } from './auth.js';
 import { MicrosoftOAuthProvider } from './oauth-provider.js';
@@ -94,6 +95,11 @@ class MicrosoftGraphServer {
         this.options.enabledTools,
         this.options.orgMode
       );
+    }
+
+    // Register custom conversion tools (Planner -> To-Do)
+    if (!this.options.readOnly) {
+      registerConversionTools(this.server, this.graphClient);
     }
   }
 

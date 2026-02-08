@@ -98,7 +98,7 @@ async function executeGraphTool(
 
     for (const [paramName, paramValue] of Object.entries(params)) {
       // Skip control parameters - not part of the Microsoft Graph API
-      if (['fetchAllPages', 'includeHeaders', 'excludeResponse', 'timezone'].includes(paramName)) {
+      if (['fetchAllPages', 'includeHeaders', 'excludeResponse', 'timezone', 'lightweight'].includes(paramName)) {
         continue;
       }
 
@@ -296,13 +296,30 @@ async function executeGraphTool(
     }
 
     if (response?.content?.[0]?.text) {
-      const responseText = response.content[0].text;
+      let responseText = response.content[0].text;
       logger.info(`Response size: ${responseText.length} characters`);
 
       try {
         const jsonResponse = JSON.parse(responseText);
         if (jsonResponse.value && Array.isArray(jsonResponse.value)) {
           logger.info(`Response contains ${jsonResponse.value.length} items`);
+
+          // Lightweight mode: strip body and other large fields, keep only key fields
+          if (params.lightweight === true) {
+            const lightweightFields = ['id', 'title', 'status', 'importance', 'dueDateTime', 'categories', 'hasAttachments'];
+            jsonResponse.value = jsonResponse.value.map((item: Record<string, unknown>) => {
+              const stripped: Record<string, unknown> = {};
+              for (const field of lightweightFields) {
+                if (item[field] !== undefined) {
+                  stripped[field] = item[field];
+                }
+              }
+              return stripped;
+            });
+            responseText = JSON.stringify(jsonResponse);
+            response.content[0].text = responseText;
+            logger.info(`Lightweight mode: stripped to ${responseText.length} characters`);
+          }
         }
         if (jsonResponse['@odata.nextLink']) {
           logger.info(`Response has pagination nextLink: ${jsonResponse['@odata.nextLink']}`);
@@ -405,6 +422,14 @@ export function registerGraphTools(
       .boolean()
       .describe('Exclude the full response body and only return success or failure indication')
       .optional();
+
+    // Add lightweight parameter for list operations - strips body and returns only key fields
+    if (tool.method.toUpperCase() === 'GET' && tool.alias.startsWith('list-')) {
+      paramSchema['lightweight'] = z
+        .boolean()
+        .describe('Return only key fields (id, title, status, importance, dueDateTime). Strips body content to reduce payload size by ~90%.')
+        .optional();
+    }
 
     // Add timezone parameter for calendar endpoints that support it
     if (endpointConfig?.supportsTimezone) {

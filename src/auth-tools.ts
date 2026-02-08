@@ -78,7 +78,7 @@ export function registerAuthTools(server: McpServer, authManager: AuthManager): 
     }
   });
 
-  server.tool('verify-login', 'Check current Microsoft authentication status', {}, async () => {
+  server.tool('verify-login', 'Check current Microsoft authentication status. Note: May return 403 even when API actually works - this checks a different Graph endpoint. If verify-login fails but you need to proceed, try the actual operation (e.g., list-todo-task-lists) which may succeed.', {}, async () => {
     const testResult = await authManager.testLogin();
 
     return {
