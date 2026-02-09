@@ -98,7 +98,7 @@ function buildTaskBody(task: PlannerTask, details: PlannerTaskDetails | null): s
 export function registerConversionTools(server: McpServer, graphClient: GraphClient): void {
   server.tool(
     'convert-planner-task-to-todo',
-    'Converts a Planner task to a To-Do task. Useful for moving tasks from "Assigned to me" into your Tasks list for ROI tracking. By default, marks the Planner task complete and adds [Planner] prefix to the title.',
+    'Converts a Planner task to a To-Do task. Useful for moving tasks from "Assigned to me" into your Tasks list for ROI tracking. By default, marks the Planner task complete and adds [Planner] prefix to the title. Keywords: move Planner to To-Do, convert Planner, migrate Planner task, transfer Planner',
     {
       plannerTaskId: z.string().describe('The ID of the Planner task to convert'),
       todoTaskListId: z

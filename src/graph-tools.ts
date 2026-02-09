@@ -239,6 +239,20 @@ async function executeGraphTool(
     }
 
     logger.info(`Making graph request to ${path} with options: ${JSON.stringify(options)}`);
+
+    // Capture query info for response echo (excludes internal control parameters)
+    const queryInfo = {
+      tool: tool.alias,
+      path: path,
+      method: tool.method.toUpperCase(),
+      parameters: Object.fromEntries(
+        Object.entries(params).filter(
+          ([key]) =>
+            !['fetchAllPages', 'includeHeaders', 'excludeResponse', 'timezone', 'lightweight'].includes(key)
+        )
+      ),
+    };
+
     let response = await graphClient.graphRequest(path, options);
 
     const fetchAllPages = params.fetchAllPages === true;
@@ -329,6 +343,23 @@ async function executeGraphTool(
       }
     }
 
+    // Wrap response with query info for transparency
+    if (response?.content?.[0]?.text) {
+      try {
+        const originalResponse = JSON.parse(response.content[0].text);
+        response.content[0].text = JSON.stringify({
+          query: queryInfo,
+          result: originalResponse,
+        });
+      } catch {
+        // Non-JSON response, wrap as string
+        response.content[0].text = JSON.stringify({
+          query: queryInfo,
+          result: response.content[0].text,
+        });
+      }
+    }
+
     // Convert McpResponse to CallToolResult with the correct structure
     const content: ContentItem[] = response.content.map((item) => ({
       type: 'text' as const,
@@ -342,11 +373,24 @@ async function executeGraphTool(
     };
   } catch (error) {
     logger.error(`Error in tool ${tool.alias}: ${(error as Error).message}`);
+    // Build query info for error response (may be incomplete if error occurred early)
+    const errorQueryInfo = {
+      tool: tool.alias,
+      path: tool.path,
+      method: tool.method.toUpperCase(),
+      parameters: Object.fromEntries(
+        Object.entries(params).filter(
+          ([key]) =>
+            !['fetchAllPages', 'includeHeaders', 'excludeResponse', 'timezone', 'lightweight'].includes(key)
+        )
+      ),
+    };
     return {
       content: [
         {
           type: 'text',
           text: JSON.stringify({
+            query: errorQueryInfo,
             error: `Error in tool ${tool.alias}: ${(error as Error).message}`,
           }),
         },
@@ -571,6 +615,7 @@ export function registerDiscoveryTools(
             type: 'text',
             text: JSON.stringify(
               {
+                query: { query, category, limit: maxLimit },
                 found: results.length,
                 total: toolsRegistry.size,
                 tools: results,
